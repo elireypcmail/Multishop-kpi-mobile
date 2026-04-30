@@ -150,6 +150,102 @@ export default function Graph() {
     }
   };
 
+  // const renderChart = () => {
+  //   if (noDataMessage) {
+  //     return (
+  //       <div className="not-found">
+  //         <div className="icon-not-found"><NotFound /></div>
+  //         <span>{noDataMessage}</span>
+  //       </div>
+  //     );
+  //   }
+
+  //   if (!chartDataState) {
+  //     return <div>Cargando datos...</div>;
+  //   }
+
+  //   if (category === "Estadísticos") return renderStatisticalData();
+
+  //   const chartData = chartDataState.results || chartDataState;
+  //   const selectedGraph = localStorage.getItem("selectedGraph");
+  //   const typeCompanies = localStorage.getItem("typeCompanies");
+
+  //   if (selectedGraph === "flujoDeCaja") return renderStatisticalData();
+
+  //   // --- LÓGICA PARA MULTIEMPRESA O COMPARATIVAS (MIXED) ---
+  //   if (selectedGraph === "ventasVScompras" || typeCompanies === "Multiple") {
+  //     switch (currentGraphType) {
+  //       case "Barra":
+  //         return (
+  //           <BarChartMixedComponent
+  //             data={chartData}
+  //             dateRange={chartDataState.dateRange}
+  //             dateTypeRange={typeRange}
+  //           />
+  //         );
+  //       case "Torta":
+  //         return (
+  //           <PieChartMixedComponent
+  //             data={chartData}
+  //             dateRange={chartDataState.dateRange}
+  //             dateTypeRange={typeRange}
+  //           />
+  //         );
+  //       case "Línea":
+  //         return (
+  //           <LineChartMixedComponent
+  //             data={chartData}
+  //             dateRange={chartDataState.dateRange}
+  //             dateTypeRange={typeRange}
+  //           />
+  //         );
+  //       default:
+  //         return (
+  //           <BarChartMixedComponent
+  //             data={chartData}
+  //             dateRange={chartDataState.dateRange}
+  //             dateTypeRange={typeRange}
+  //           />
+  //         );
+  //     }
+  //   }
+
+  //   // --- LÓGICA PARA EMPRESA ÚNICA (ESTÁNDAR) ---
+  //   switch (currentGraphType) {
+  //     case "Barra":
+  //       return (
+  //         <BarChartComponent
+  //           data={chartData}
+  //           dateRange={chartDataState.dateRange}
+  //           dateTypeRange={typeRange}
+  //         />
+  //       );
+  //     case "Torta":
+  //       return (
+  //         <PieChartComponent
+  //           data={chartData}
+  //           dateRange={chartDataState.dateRange}
+  //           dateTypeRange={typeRange}
+  //         />
+  //       );
+  //     case "Línea":
+  //       return (
+  //         <LineChartComponent
+  //           data={chartData}
+  //           dateRange={chartDataState.dateRange}
+  //           dateTypeRange={typeRange}
+  //         />
+  //       );
+  //     default:
+  //       return (
+  //         <div className="not-found">
+  //           <div className="icon-not-found"><NotFound /></div>
+  //           <span>No se ha seleccionado ningún tipo de gráfico válido.</span>
+  //         </div>
+  //       );
+  //   }
+  // };
+
   const renderChart = () => {
     if (noDataMessage) {
       return (
@@ -172,8 +268,17 @@ export default function Graph() {
 
     if (selectedGraph === "flujoDeCaja") return renderStatisticalData();
 
-    // --- LÓGICA PARA MULTIEMPRESA O COMPARATIVAS (MIXED) ---
-    if (selectedGraph === "ventasVScompras" || typeCompanies === "Multiple") {
+    if (selectedGraph === "ventasVScompras") {
+      return (
+        <BarChartMixedComponent
+          data={chartData}
+          dateRange={chartDataState.dateRange}
+          dateTypeRange={typeRange}
+        />
+      );
+    }
+
+    if (typeCompanies === "Multiple") {
       switch (currentGraphType) {
         case "Barra":
           return (
@@ -245,7 +350,6 @@ export default function Graph() {
         );
     }
   };
-
 
   const renderStatisticalData = () => {
     if (!chartDataState || Object.keys(chartDataState).length === 0) {
@@ -401,10 +505,19 @@ export default function Graph() {
 
     const renderField = (fieldKey, fieldValue, value) => {
       const parseNumber = (v) => {
-        if (v === null || v === undefined) return 0;
+        if (v === null || v === undefined || v === "") return 0;
         if (typeof v === "number") return v;
-        const cleaned = v.toString().replace(/\./g, "").replace(/,/g, ".");
-        const n = parseFloat(cleaned);
+
+        let str = v.toString().trim();
+
+        if (str.includes(",") && str.includes(".")) {
+          str = str.replace(/\./g, "").replace(",", ".");
+        }
+        else if (str.includes(",")) {
+          str = str.replace(",", ".");
+        }
+        
+        const n = parseFloat(str);
         return isNaN(n) ? 0 : n;
       };
 

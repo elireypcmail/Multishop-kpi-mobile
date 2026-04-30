@@ -1,7 +1,7 @@
 "use client";
 
 import { Label, Pie, PieChart } from "recharts";
-import { TrendingUp, DollarSign } from "lucide-react";
+import { TrendingUp, DollarSign, Package } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 
 import { Card, CardContent, CardFooter } from "@comp/card";
@@ -12,15 +12,14 @@ import {
   ChartTooltipContent,
 } from "@comp/chart";
 
-// Paleta ajustada: El azul principal es más vibrante, los demás son oscuros para contraste
 const generateBlueShades = (count: number) => {
   const customPalette = [
-    "#3b82f6", // Azul principal (más claro/vivo)
-    "#1e3a8a", // Azul real oscuro
-    "#001a33", // Navy profundo
-    "#312e81", // Indigo oscuro
-    "#0f172a", // Slate casi negro
-    "#1e293b", // Slate grisáceo oscuro
+    "#3b82f6", 
+    "#1e3a8a", 
+    "#001a33", 
+    "#312e81", 
+    "#0f172a", 
+    "#1e293b", 
   ];
 
   return Array.from(
@@ -75,7 +74,7 @@ export default function PieChartMixedComponent({
   dateRange,
   dateTypeRange,
 }: PieChartMixedComponentProps) {
-  const [name, setName] = useState("");
+  const [selectedKpi, setSelectedKpi] = useState("");
   const [activeCompany, setActiveCompany] = useState("");
   const [chartDimensions, setChartDimensions] = useState({
     width: 0,
@@ -84,15 +83,14 @@ export default function PieChartMixedComponent({
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const graphName = localStorage.getItem("selectedGraphName");
-    setName(graphName || "");
+    const savedKpi = localStorage.getItem("selectedGraph");
+    setSelectedKpi(savedKpi || "");
   }, [data]);
 
   useEffect(() => {
     const updateChartDimensions = () => {
       if (cardRef.current) {
         const { width } = cardRef.current.getBoundingClientRect();
-        // Ajustamos la altura para mantener la proporción con el gráfico más grande
         const height = Math.min(width, 480); 
         setChartDimensions({ width, height });
       }
@@ -102,6 +100,11 @@ export default function PieChartMixedComponent({
     window.addEventListener("resize", updateChartDimensions);
     return () => window.removeEventListener("resize", updateChartDimensions);
   }, []);
+
+  const isMargin = selectedKpi === "margenDeUtilidad";
+  const isUnits = selectedKpi === "unidadesVendidas";
+  const isAverage = selectedKpi === "valorDeLaUnidadPromedio";
+  const showAverage = isMargin || isUnits || isAverage;
 
   const formattedData = useMemo(() => {
     if (Array.isArray(data) && data.length > 0) {
@@ -115,22 +118,13 @@ export default function PieChartMixedComponent({
       groupedData.sort((a, b) => b.value - a.value);
       const shades = generateBlueShades(groupedData.length);
 
-      return groupedData.map((item, index) => {
-        let finalColor;
-        if (name === "Análisis de Ventas vs Compras") {
-          finalColor = (item.label === "Ventas" || item.label === "Valor Total") 
-            ? "#3b82f6" 
-            : "#001a33";
-        } else {
-          // Asignación estricta por paleta para diferenciar empresas
-          finalColor = shades[index];
-        }
-
-        return { ...item, fill: finalColor };
-      }).filter((item) => item.value > 0);
+      return groupedData.map((item, index) => ({
+        ...item,
+        fill: shades[index] 
+      })).filter((item) => item.value > 0);
     }
     return [];
-  }, [data, name]);
+  }, [data]);
 
   useEffect(() => {
     setActiveCompany(formattedData[0]?.companyName || "");
@@ -152,9 +146,9 @@ export default function PieChartMixedComponent({
     [formattedData]
   );
   
-  const promedioTotal = useMemo(
-    () => (formattedData.length > 0 ? totalValue / formattedData.length : 0),
-    [formattedData, totalValue]
+  const footerValue = useMemo(
+    () => (formattedData.length > 0 ? (showAverage ? totalValue / formattedData.length : totalValue) : 0),
+    [formattedData, totalValue, showAverage]
   );
 
   if (!data || data.length === 0)
@@ -184,7 +178,6 @@ export default function PieChartMixedComponent({
               nameKey="companyName"
               cx="50%"
               cy="50%"
-              // Radios aumentados para un gráfico mucho más grande
               innerRadius={chartDimensions.width * 0.22} 
               outerRadius={chartDimensions.width * 0.40} 
               strokeWidth={4}
@@ -203,9 +196,8 @@ export default function PieChartMixedComponent({
                           dominantBaseline="middle"
                           className="fill-muted-foreground text-[14px]"
                         >
-                          {name !== "Análisis de Ventas vs Compras" && (
-                            <>{percentage.toFixed(2)}%</>
-                          )}
+                          {/* Se quitó el símbolo % del porcentaje de participación */}
+                          {percentage.toFixed(2)}
                         </text>
                         <text
                           x={viewBox.cx ?? 0}
@@ -214,7 +206,8 @@ export default function PieChartMixedComponent({
                           dominantBaseline="middle"
                           className="fill-foreground text-2xl font-bold"
                         >
-                          ${formatNumber(activeData?.value ?? 0)}
+                          {/* Se eliminaron todos los símbolos condicionales ($ y %) */}
+                          {formatNumber(activeData?.value ?? 0)}
                         </text>
                         <text
                           x={viewBox.cx ?? 0}
@@ -238,29 +231,18 @@ export default function PieChartMixedComponent({
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm uppercase pt-6">
-        {name === "Análisis de Ventas vs Compras" ? (
-          <div className="flex justify-center flex-row text-[1rem] gap-6">
-            <div className="flex items-center gap-2 font-medium">
-              <div className="w-4 h-4 rounded-full bg-[#3b82f6]" />
-              <span className="text-[13px] font-light">TOTAL VENTAS</span>
-            </div>
-            <div className="flex items-center gap-2 font-medium">
-              <div className="w-4 h-4 rounded-full bg-[#001a33]" />
-              <span className="text-[13px] font-light">TOTAL COMPRAS</span>
-            </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 font-bold leading-none">
+            {isMargin && <TrendingUp className="h-4 w-4" />}
+            {isUnits && <TrendingUp className="h-4 w-4" />}
+            {isAverage && <TrendingUp className="h-4 w-4" />}
+            
+            <span>
+              {showAverage ? "PROMEDIO GENERAL" : `TOTAL GENERAL ${dateTypeRange || ''}`}:{" "}
+              {formatNumber(footerValue)}
+            </span>
           </div>
-        ) : (
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              <TrendingUp className="h-4 w-4" /> PROMEDIO {dateTypeRange}:{" "}
-              ${formatNumber(promedioTotal)}
-            </div>
-            <div className="flex items-center gap-2 font-medium leading-none">
-              <DollarSign className="h-4 w-4" /> TOTAL GENERAL:{" "}
-              ${formatNumber(totalValue)}
-            </div>
-          </div>
-        )}
+        </div>
 
         {parsedDateRange.from && (
           <div className="flex items-center gap-2 leading-none text-muted-foreground text-[12px] mt-4">
