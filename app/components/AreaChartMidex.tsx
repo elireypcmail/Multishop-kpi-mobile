@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from "react"
-import { DollarSign } from "lucide-react"
+import { DollarSign, TrendingUp, Package, Calculator } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -38,6 +38,16 @@ const formatNumber = (value: number) => {
   }).format(value);
 }
 
+// Función para parsear el rango de fechas similar al componente Pie
+const parseDateRange = (dateStr: string) => {
+  if (!dateStr) return { from: "", to: "" };
+  const dates = dateStr.split(" - ").map((date) => date.trim());
+  if (dates.length === 2) {
+    return { from: dates[0], to: dates[1] };
+  }
+  return { from: dateStr, to: dateStr }; 
+};
+
 interface DataItem {
   periodo: string;
   total_valor: string;
@@ -53,13 +63,23 @@ interface LineChartMixedProps {
 }
 
 export default function IndexLineChart({ data, dateRange }: LineChartMixedProps) {
-  const [name, setName] = useState('')
+  const [selectedKpi, setSelectedKpi] = useState('')
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const graphName = localStorage.getItem("selectedGraphName")
-    setName(graphName || 'Comparison')
+    const savedKpi = localStorage.getItem("selectedGraph")
+    setSelectedKpi(savedKpi || '')
   }, [data])
+
+  // Lógica de identificación de KPI
+  const isMargin = selectedKpi === "margenDeUtilidad";
+  const isUnits = selectedKpi === "unidadesVendidas";
+  const isAverage = selectedKpi === "valorDeLaUnidadPromedio";
+  const showAverage = isMargin || isUnits || isAverage;
+
+  // Lógica de parseo de fechas
+  const parsedDateRange = dateRange?.from ? parseDateRange(dateRange.from) : { from: "", to: "" };
+  const parsedDateRangeTo = dateRange?.to ? parseDateRange(dateRange.to) : { from: "", to: "" };
 
   const chartData = useMemo(() => {
     if (!Array.isArray(data)) return [];
@@ -70,17 +90,18 @@ export default function IndexLineChart({ data, dateRange }: LineChartMixedProps)
     })).sort((a, b) => b.value - a.value); 
   }, [data]);
 
-  const totalGeneral = useMemo(() => {
-    return chartData.reduce((sum, item) => sum + item.value, 0)
-  }, [chartData])
+  const footerValue = useMemo(() => {
+    const total = chartData.reduce((sum, item) => sum + item.value, 0);
+    return chartData.length > 0 ? (showAverage ? total / chartData.length : total) : 0;
+  }, [chartData, showAverage]);
 
   const chartConfig = {
     value: {
-      label: "Amount",
+      label: "Cantidad",
     },
   } satisfies ChartConfig
 
-  if (!data || data.length === 0) return <div className="p-10 text-center uppercase text-xs">No data available.</div>
+  if (!data || data.length === 0) return <div className="p-10 text-center uppercase text-xs font-bold">No hay datos disponibles.</div>
 
   return (
     <Card ref={cardRef} className="border-none shadow-none bg-transparent">
@@ -105,7 +126,7 @@ export default function IndexLineChart({ data, dateRange }: LineChartMixedProps)
                stroke="var(--muted-foreground, #737373)"
                tickLine={false}
                axisLine={false}
-               tickFormatter={(value) => `$${value >= 1000 ? (value/1000).toFixed(0)+'k' : formatNumber(value)}`}
+               tickFormatter={(value) => `${value >= 1000 ? (value/1000).toFixed(0)+'k' : formatNumber(value)}`}
                className="text-[9px] font-medium"
             />
             <ChartTooltip
@@ -133,7 +154,7 @@ export default function IndexLineChart({ data, dateRange }: LineChartMixedProps)
       </CardContent>
 
       <CardFooter className="flex-col gap-3 text-sm uppercase pt-20">
-        <div className="flex flex-col w-full gap-2 border-t pt-10">
+        <div className="flex flex-col w-full gap-2 border-t pt-5">
           {chartData.map((item, index) => (
             <div key={index} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -143,18 +164,39 @@ export default function IndexLineChart({ data, dateRange }: LineChartMixedProps)
                 />
                 <span className="text-[11px] font-medium text-muted-foreground">{item.name}</span>
               </div>
-              <span className="text-[11px] font-bold">${formatNumber(item.value)}</span>
+              <span className="text-[11px] font-bold">{formatNumber(item.value)}</span>
             </div>
           ))}
         </div>
 
-        <div className="flex items-center gap-2 font-bold text-base mt-2 border-t w-full justify-center">
-          <DollarSign className="h-5 w-5 text-blue-500" /> TOTAL: ${formatNumber(totalGeneral)}
+        <div className="flex items-center gap-2 font-bold text-base mt-2 border-t w-full justify-center pt-4">
+          {isMargin && <TrendingUp className="h-5 w-5 text-blue-500" />}
+          {isUnits && <TrendingUp className="h-5 w-5 text-blue-500" />}
+          {isAverage && <TrendingUp className="h-5 w-5 text-blue-500" />}
+          
+          <span>
+            {showAverage ? "PROMEDIO GENERAL" : "TOTAL GENERAL"}: {formatNumber(footerValue)}
+          </span>
         </div>
         
-        {data[0]?.periodo && (
+        {parsedDateRange.from && (
+          <div className="text-[11px] text-muted-foreground font-medium text-center mt-1">
+            {new Date(parsedDateRange.from).toLocaleDateString("es-ES", {
+              month: "long",
+              year: "numeric",
+            })}{" "}
+            -{" "}
+            {new Date(parsedDateRangeTo.to || parsedDateRange.from).toLocaleDateString("es-ES", {
+              month: "long",
+              year: "numeric",
+            })}
+          </div>
+        )}
+
+        {/* Mantenemos el periodo simple si existe como fallback */}
+        {!parsedDateRange.from && data[0]?.periodo && (
           <div className="text-muted-foreground text-[10px] text-center mt-1 font-medium">
-             PERIOD: {data[0].periodo}
+             PERIODO: {data[0].periodo}
           </div>
         )}
       </CardFooter>

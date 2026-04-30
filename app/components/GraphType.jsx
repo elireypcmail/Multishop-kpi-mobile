@@ -67,7 +67,7 @@ const GraphTypeModal = ({ onClose, onSave, selectedGraphName }) => {
         <span className="close-button" onClick={handleClose}>
           <CloseModal />
         </span>
-        <h2 className="ti-graph">Chart Types</h2>
+        <h2 className="ti-graph">Tipos de Gráficos</h2>
         <ul className="li">
           {graphTypes.map((graphType, index) => (
             <li
@@ -87,7 +87,7 @@ const GraphTypeModal = ({ onClose, onSave, selectedGraphName }) => {
             onClick={handleSave} 
             disabled={!currentSelectedGraphType || loading}
           >
-            {loading ? 'Saving...' : 'Save'}
+            {loading ? 'Guardando...' : 'Guardar'}
           </button>
         </div>
       </div>
