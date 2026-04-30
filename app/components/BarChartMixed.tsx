@@ -66,7 +66,7 @@ const CustomLabel = ({ x, y, width, height, value, isMargin }: any) => {
   const insideBar = width > textWidth + 20;
   const textColor = insideBar ? "white" : isDarkMode ? "white" : "black";
 
-  const displayValue = `${formatNumber(value)}${isMargin ? '%' : ''}`;
+  const displayValue = `${formatNumber(value)}${isMargin ? '' : ''}`;
 
   return (
     <text
@@ -117,6 +117,9 @@ export default function BarChartMixedComponent({
     let sumVentas = 0;
     let sumCompras = 0;
     
+    // Set para controlar que el nombre de la empresa solo se asigne a la etiqueta del eje Y una vez
+    const displayedNames = new Set();
+
     const groupedData = [...data].map((item) => {
       const val = parseFloat(item.total_valor) || 0;
       sum += val;
@@ -125,9 +128,21 @@ export default function BarChartMixedComponent({
       if (isVenta) sumVentas += val;
       else sumCompras += val;
 
+      const rawName = item.nomempc || item.nomemp || "";
+      let yAxisLabel = rawName;
+
+      // Lógica para no repetir nombres en el eje Y en Ventas vs Compras
+      if (isVentasVsCompras) {
+        if (displayedNames.has(rawName)) {
+          yAxisLabel = ""; 
+        } else {
+          displayedNames.add(rawName);
+        }
+      }
+
       return {
         ...item,
-        companyName: item.nomempc || item.nomemp || "SIN NOMBRE",
+        yAxisLabel,
         total: val,
         fill: isVenta ? "#3b82f6" : "#001a33",
       };
@@ -171,13 +186,13 @@ export default function BarChartMixedComponent({
           >
             <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.2} />
             <YAxis
-              dataKey="companyName"
+              dataKey="yAxisLabel"
               type="category"
               tickLine={false}
               axisLine={false}
               className="text-[10px] font-black uppercase"
               width={100}
-              tickFormatter={(value) => (value.length > 15 ? `${value.substring(0, 12)}...` : value)}
+              tickFormatter={(value) => (value && value.length > 15 ? `${value.substring(0, 12)}...` : value)}
             />
             <XAxis dataKey="total" type="number" hide />
             <ChartTooltip
@@ -199,16 +214,25 @@ export default function BarChartMixedComponent({
       <CardFooter className="flex flex-col items-center gap-2 border-t pt-6 w-full uppercase">
         
         {isVentasVsCompras ? (
-          <div className="flex justify-center flex-row text-[1rem] gap-6 mt-2">
-            <div className="flex items-center gap-2 font-bold leading-none">
-              <div className="w-4 h-4 rounded-sm bg-[#3b82f6]" />
-              <span className="text-sm font-bold">VENTAS:</span>
-              <span className="text-sm font-bold text-[#3b82f6]">{formatNumber(totalVentas)}</span>
+          /* LEYENDAS CON VALORES DEBAJO */
+          <div className="flex justify-center flex-row gap-10 mt-2">
+            <div className="flex items-start gap-2">
+              <div className="w-4 h-4 mt-1 rounded-sm bg-[#3b82f6]" />
+              <div className="flex flex-col">
+                <span className="text-[11px] font-bold text-muted-foreground leading-none">VENTAS</span>
+                <span className="text-sm font-black text-[#3b82f6] leading-tight">
+                  {formatNumber(totalVentas)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 font-bold leading-none">
-              <div className="w-4 h-4 rounded-sm bg-[#001a33]" />
-              <span className="text-sm font-bold">COMPRAS:</span>
-              <span className="text-sm font-bold text-[#001a33] dark:text-gray-300">{formatNumber(totalCompras)}</span>
+            <div className="flex items-start gap-2">
+              <div className="w-4 h-4 mt-1 rounded-sm bg-[#001a33]" />
+              <div className="flex flex-col">
+                <span className="text-[11px] font-bold text-muted-foreground leading-none">COMPRAS</span>
+                <span className="text-sm font-black text-[#001a33] dark:text-gray-300 leading-tight">
+                  {formatNumber(totalCompras)}
+                </span>
+              </div>
             </div>
           </div>
         ) : (
@@ -217,13 +241,13 @@ export default function BarChartMixedComponent({
             <span>
               {showAverage ? "PROMEDIO GENERAL" : "TOTAL GENERAL"}:{" "}
               {formatNumber(footerValue)}
-              {isMargin && "%"}
+              {isMargin && ""}
             </span>
           </div>
         )}
 
         {parsedDateRange.from && (
-          <div className="text-[11px] text-muted-foreground font-medium mt-4">
+          <div className="text-[11px] text-muted-foreground font-medium mt-6">
             {new Date(parsedDateRange.from).toLocaleDateString("es-ES", {
               month: "long",
               year: "numeric",
