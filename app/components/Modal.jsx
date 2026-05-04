@@ -152,21 +152,6 @@ const Modal = () => {
     }
   };
 
-  // const handleItemClick = (graph) => {
-  //   localStorage.setItem("selectedGraph", graph.value);
-  //   localStorage.setItem("selectedGraphName", graph.name);
-  //   localStorage.setItem("selectedCategory", category);
-
-  //   setCurrentSelectedGraph(graph.value);
-
-  //   const graphType =
-  //     category === "Estadísticos"
-  //       ? "Texto"
-  //       : defaultChartTypes[graph.name] || defaultGraphType;
-  //   setSelectedGraphType(graphType);
-  //   localStorage.setItem("selectedGraphType", graphType);
-  // };
-
   const handleItemClick = (graph) => {
     localStorage.setItem("selectedGraph", graph.value);
     localStorage.setItem("selectedGraphName", graph.name);
@@ -271,11 +256,13 @@ const Modal = () => {
     await handleFetchChartData();
     setModalState({ open: false, message: "", status: "" });
     setIsButtonDisabled(false);
-    setIsButtonDisabled(false), 5000
   };
 
   const handleClose = () => {
-    router.push("/category");
+    setModalState({ open: true, message: "Cargando...", status: "loading" });
+    setTimeout(() => {
+      router.push("/category");
+    }, 1000);
   };
 
   return (
@@ -311,11 +298,12 @@ const Modal = () => {
               {getGraphs().map((graph) => (
                 <li
                   key={graph.name}
-                  className={`separate ${currentSelectedGraph === graph.value &&
+                  className={`separate ${
+                    currentSelectedGraph === graph.value &&
                     (graph.criterio ? criterio === graph.criterio : true)
-                    ? "selected"
-                    : ""
-                    }`}
+                      ? "selected"
+                      : ""
+                  }`}
                   onClick={() => handleItemClick(graph)}
                 >
                   <div className="list">
@@ -324,11 +312,6 @@ const Modal = () => {
                 </li>
               ))}
             </ul>
-
-
-
-
-
 
             <div className="save-button-container">
               <button className="back" onClick={handleClose}>
@@ -339,7 +322,9 @@ const Modal = () => {
               </button>
               <button
                 onClick={handleSearchGraph}
-                disabled={isButtonDisabled || !currentSelectedGraph || isPending}
+                disabled={
+                  isButtonDisabled || !currentSelectedGraph || isPending
+                }
               >
                 {category === "Estadísticos"
                   ? "Ver estadística"

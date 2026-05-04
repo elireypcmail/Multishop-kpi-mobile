@@ -75,7 +75,10 @@ export default function IndexLineChart({ data, dateRange }: LineChartMixedProps)
   const isMargin = selectedKpi === "margenDeUtilidad";
   const isUnits = selectedKpi === "unidadesVendidas";
   const isAverage = selectedKpi === "valorDeLaUnidadPromedio";
-  const showAverage = isMargin || isUnits || isAverage;
+  const isTicket = selectedKpi === "ticketDeVenta"; // <-- Nuevo KPI agregado
+  
+  // Ahora showAverage también evalúa si es ticketDeVenta
+  const showAverage = isMargin || isUnits || isAverage || isTicket;
 
   // Lógica de parseo de fechas
   const parsedDateRange = dateRange?.from ? parseDateRange(dateRange.from) : { from: "", to: "" };
@@ -170,9 +173,8 @@ export default function IndexLineChart({ data, dateRange }: LineChartMixedProps)
         </div>
 
         <div className="flex items-center gap-2 font-bold text-base mt-2 border-t w-full justify-center pt-4">
-          {isMargin && <TrendingUp className="h-5 w-5 text-blue-500" />}
-          {isUnits && <TrendingUp className="h-5 w-5 text-blue-500" />}
-          {isAverage && <TrendingUp className="h-5 w-5 text-blue-500" />}
+          {/* Se unificó la lógica del ícono para cualquier KPI que muestre promedio */}
+          {showAverage && <TrendingUp className="h-5 w-5 text-blue-500" />}
           
           <span>
             {showAverage ? "PROMEDIO GENERAL" : "TOTAL GENERAL"}: {formatNumber(footerValue)}

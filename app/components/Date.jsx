@@ -1,6 +1,7 @@
 import "react-day-picker/dist/style.css"
 import React, { useState, useEffect } from "react"
-import { ArrowRight, Sun, Moon } from "./Icons"
+// Agregamos ReloadIcon a los imports
+import { ArrowRight, Sun, Moon, ReloadIcon } from "./Icons" 
 import { addDays } from "date-fns"
 import { DayPicker } from "react-day-picker"
 import { es } from 'date-fns/locale'
@@ -14,6 +15,8 @@ import { removeCookie } from "@g/cookies"
 export default function DateComponent() {
   const [darkMode, setDarkMode] = useState(false)
   const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false)
+  // Nuevo estado para controlar el icono de carga
+  const [isLoading, setIsLoading] = useState(false) 
   const [range, setRange] = useState({
     from: new Date(),
     to: addDays(new Date(), 4),
@@ -37,7 +40,7 @@ export default function DateComponent() {
 
   useEffect(() => {
     const savedTime = localStorage.getItem("loginTime");
-    const timeExpire = Number(localStorage.getItem("timeExpire")); // Asegura que es un número
+    const timeExpire = Number(localStorage.getItem("timeExpire"));
 
     if (savedTime && !isNaN(timeExpire)) {
       const savedDate = new Date(savedTime);
@@ -48,14 +51,11 @@ export default function DateComponent() {
 
       if (diffInHours >= timeExpire) {
         setShowSessionExpiredModal(true);
-
-        // IMPORTANTE: hacer push('/') después de mostrar el modal
         removeCookie('instancia');
         push('/');
       }
     }
   }, [push]);
-
 
   useEffect(() => {
     if (darkMode) {
@@ -79,7 +79,12 @@ export default function DateComponent() {
         to: range.to.toISOString(),
       })
     )
-    push("/category")
+
+    setIsLoading(true)
+
+    setTimeout(() => {
+      push("/category")
+    }, 1000)
   }
 
   return (
@@ -115,13 +120,23 @@ export default function DateComponent() {
             </div>
           </div>
           <div className="footer2">
-            <div className="button-calendar" onClick={handleNext}>
+            <div 
+              className={`button-calendar ${isLoading ? "disabled" : ""}`} 
+              onClick={!isLoading ? handleNext : null}
+            >
               <span>Siguiente</span>
               <ArrowRight />
             </div>
           </div>
           <FooterGraph />
+          
           {showSessionExpiredModal && <ModalTime />}
+
+          {isLoading && (
+            <div className="modal-login-loading">
+              <ReloadIcon className="icon-loading" />
+            </div>
+          )}
         </div>
       </div>
     </>
