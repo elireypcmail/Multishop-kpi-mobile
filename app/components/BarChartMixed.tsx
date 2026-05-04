@@ -104,10 +104,14 @@ export default function BarChartMixedComponent({
     setTypeCompanies(savedTypeCompanies || "");
   }, [data]);
 
+  // Lógica de identificación de KPI (Igual que en el componente de líneas)
   const isMargin = selectedKpi === "margenDeUtilidad";
   const isUnits = selectedKpi === "unidadesVendidas";
   const isAverage = selectedKpi === "valorDeLaUnidadPromedio";
-  const showAverage = isMargin || isUnits || isAverage;
+  const isTicket = selectedKpi === "ticketDeVenta"; // <-- Nuevo ajuste aplicado
+  
+  const showAverage = isMargin || isUnits || isAverage || isTicket;
+  
   const isVentasVsCompras = graphName === "Análisis de Ventas vs Compras";
 
   const { combinedData, footerValue, totalVentas, totalCompras } = useMemo(() => {
@@ -117,7 +121,6 @@ export default function BarChartMixedComponent({
     let sumVentas = 0;
     let sumCompras = 0;
     
-    // Set para controlar que el nombre de la empresa solo se asigne a la etiqueta del eje Y una vez
     const displayedNames = new Set();
 
     const groupedData = [...data].map((item) => {
@@ -131,7 +134,6 @@ export default function BarChartMixedComponent({
       const rawName = item.nomempc || item.nomemp || "";
       let yAxisLabel = rawName;
 
-      // Lógica para no repetir nombres en el eje Y en Ventas vs Compras
       if (isVentasVsCompras) {
         if (displayedNames.has(rawName)) {
           yAxisLabel = ""; 
@@ -214,7 +216,6 @@ export default function BarChartMixedComponent({
       <CardFooter className="flex flex-col items-center gap-2 border-t pt-6 w-full uppercase">
         
         {isVentasVsCompras ? (
-          /* LEYENDAS CON VALORES DEBAJO */
           <div className="flex justify-center flex-row gap-10 mt-2">
             <div className="flex items-start gap-2">
               <div className="w-4 h-4 mt-1 rounded-sm bg-[#3b82f6]" />
@@ -241,7 +242,6 @@ export default function BarChartMixedComponent({
             <span>
               {showAverage ? "PROMEDIO GENERAL" : "TOTAL GENERAL"}:{" "}
               {formatNumber(footerValue)}
-              {isMargin && ""}
             </span>
           </div>
         )}

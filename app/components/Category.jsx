@@ -11,12 +11,14 @@ import {
   Operative,
   Statistical,
   Sun,
-  Moon
+  Moon,
+  ReloadIcon // Importamos el icono de carga
 } from './Icons'
 
 export default function Category() {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [darkMode, setDarkMode] = useState(false)
+  const [isLoading, setIsLoading] = useState(false) // Nuevo estado para la carga
   const router = useRouter()
 
   useEffect(() => {
@@ -45,19 +47,27 @@ export default function Category() {
     localStorage.setItem("darkMode", JSON.stringify(newMode))
   }
 
+
   const handleCategoryClick = (category) => {
     localStorage.setItem('selectedCategory', category)
     setSelectedCategory(category)
+    setIsLoading(true)
 
-    router.push({
-      pathname: '/listkpi',
-      query: { category }
-    })
+    setTimeout(() => {
+      router.push({
+        pathname: '/listkpi',
+        query: { category }
+      })
+    }, 1000)
   }
 
   const backRouter = (e) => {
     e.preventDefault()
-    router.push('/date')
+    setIsLoading(true)
+
+    setTimeout(() => {
+      router.push('/date')
+    }, 1000)
   }
 
   return (
@@ -90,22 +100,22 @@ export default function Category() {
 
           <div className="row-ca">
             <div
-              className={`categoria ${selectedCategory === 'Financieros' ? 'active' : ''}`}
-              onClick={() => handleCategoryClick('Financieros')}
+              className={`categoria ${selectedCategory === 'Financieros' ? 'active' : ''} ${isLoading ? 'disabled' : ''}`}
+              onClick={() => !isLoading && handleCategoryClick('Financieros')}
             >
               <Financial />
               <span className='ca-ti'>Análisis Financiero</span>
             </div>
             <div
-              className={`categoria ${selectedCategory === 'Operativos' ? 'active' : ''}`}
-              onClick={() => handleCategoryClick('Operativos')}
+              className={`categoria ${selectedCategory === 'Operativos' ? 'active' : ''} ${isLoading ? 'disabled' : ''}`}
+              onClick={() => !isLoading && handleCategoryClick('Operativos')}
             >
               <Operative />
               <span className='ca-ti'>Análisis Operativo</span>
             </div>
             <div
-              className={`categoria ${selectedCategory === 'Estadísticos' ? 'active' : ''}`}
-              onClick={() => handleCategoryClick('Estadísticos')}
+              className={`categoria ${selectedCategory === 'Estadísticos' ? 'active' : ''} ${isLoading ? 'disabled' : ''}`}
+              onClick={() => !isLoading && handleCategoryClick('Estadísticos')}
             >
               <Statistical />
               <span className='ca-ti'>Análisis Estadístico</span>
@@ -113,15 +123,21 @@ export default function Category() {
           </div>
 
           <div className="button__graph">
-            <button className='btn' onClick={backRouter}>
+            <button className='btn' onClick={backRouter} disabled={isLoading}>
               <ArrowLeft></ArrowLeft>
               <span>Atrás</span>
             </button>
           </div>
         </div>
 
-
         <FooterGraph />
+
+        {/* AJUSTE: Visualización del loader */}
+        {isLoading && (
+          <div className="modal-login-loading">
+            <ReloadIcon className="icon-loading" />
+          </div>
+        )}
       </div>
     </div>
   )

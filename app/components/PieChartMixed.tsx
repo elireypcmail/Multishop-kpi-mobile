@@ -101,10 +101,13 @@ export default function PieChartMixedComponent({
     return () => window.removeEventListener("resize", updateChartDimensions);
   }, []);
 
+  // Lógica de identificación de KPI (Actualizada)
   const isMargin = selectedKpi === "margenDeUtilidad";
   const isUnits = selectedKpi === "unidadesVendidas";
   const isAverage = selectedKpi === "valorDeLaUnidadPromedio";
-  const showAverage = isMargin || isUnits || isAverage;
+  const isTicket = selectedKpi === "ticketDeVenta"; // <-- Nuevo ajuste
+  
+  const showAverage = isMargin || isUnits || isAverage || isTicket;
 
   const formattedData = useMemo(() => {
     if (Array.isArray(data) && data.length > 0) {
@@ -196,7 +199,6 @@ export default function PieChartMixedComponent({
                           dominantBaseline="middle"
                           className="fill-muted-foreground text-[14px]"
                         >
-                          {/* Se quitó el símbolo % del porcentaje de participación */}
                           {percentage.toFixed(2)}
                         </text>
                         <text
@@ -206,7 +208,6 @@ export default function PieChartMixedComponent({
                           dominantBaseline="middle"
                           className="fill-foreground text-2xl font-bold"
                         >
-                          {/* Se eliminaron todos los símbolos condicionales ($ y %) */}
                           {formatNumber(activeData?.value ?? 0)}
                         </text>
                         <text
@@ -233,9 +234,7 @@ export default function PieChartMixedComponent({
       <CardFooter className="flex-col gap-2 text-sm uppercase pt-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 font-bold leading-none">
-            {isMargin && <TrendingUp className="h-4 w-4" />}
-            {isUnits && <TrendingUp className="h-4 w-4" />}
-            {isAverage && <TrendingUp className="h-4 w-4" />}
+            {showAverage && <TrendingUp className="h-4 w-4 text-blue-500" />}
             
             <span>
               {showAverage ? "PROMEDIO GENERAL" : `TOTAL GENERAL ${dateTypeRange || ''}`}:{" "}
